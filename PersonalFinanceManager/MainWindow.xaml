@@ -1,0 +1,48 @@
+﻿<Window x:Class="PersonalFinanceManager.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:PersonalFinanceManager.ViewModels"
+        Title="Менеджер персональных финансов" 
+        Height="768" Width="1024"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="#007ACC" Padding="15">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Менеджер персональных финансов" 
+                          FontSize="18" FontWeight="Bold" 
+                          Foreground="White" Margin="10,0,0,0"
+                          VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Border Grid.Column="0" BorderBrush="LightGray" BorderThickness="0,0,1,0">
+                <StackPanel Margin="10">
+                    <Button Content="Счета" Command="{Binding NavigateCommand}" 
+                            CommandParameter="Accounts" Margin="0,5"/>
+                    <Button Content="Транзакции" Command="{Binding NavigateCommand}" 
+                            CommandParameter="Transactions" Margin="0,5"/>
+                    <Button Content="Категории" Command="{Binding NavigateCommand}" 
+                            CommandParameter="Categories" Margin="0,5"/>
+                    <Button Content="Отчеты" Command="{Binding NavigateCommand}" 
+                            CommandParameter="Reports" Margin="0,5"/>
+                </StackPanel>
+            </Border>
+
+            <ContentControl Grid.Column="1" Content="{Binding CurrentViewModel}"/>
+        </Grid>
+    </Grid>
+</Window>
