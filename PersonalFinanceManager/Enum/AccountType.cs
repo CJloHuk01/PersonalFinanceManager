@@ -10,6 +10,10 @@ namespace PersonalFinanceManager.Enum
         BankCard,
         CreditCard,
         Savings,
-        Investment
+        Investment,
+        Deposit,
+        ElectronicWallet,
+        Loan,
+        Mortgage
     }
 }

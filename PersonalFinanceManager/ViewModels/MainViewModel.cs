@@ -1,46 +1,44 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PersonalFinanceManager.Views;
 
+namespace PersonalFinanceManager.ViewModels;
 
-namespace PersonalFinanceManager.ViewModels
+public partial class MainViewModel : ViewModelBase
 {
-    public partial class MainViewModel : ViewModelBase
+    [ObservableProperty]
+    private object _currentView = null!;
+
+    private readonly AccountsView _accountsView;
+    private readonly TransactionsView _transactionsView;
+    private readonly CategoriesView _categoriesView;
+
+    public MainViewModel()
     {
-        [ObservableProperty]
-        private ViewModelBase _currentViewModel = null!;
+        _accountsView = new AccountsView();
+        _transactionsView = new TransactionsView();
+        _categoriesView = new CategoriesView();
+        CurrentView = _accountsView;
+        Title = "Управление счетами";
+    }
 
-        private readonly AccountsViewModel _accountsViewModel;
-        private readonly TransactionsViewModel _transactionsViewModel;
-        private readonly CategoriesViewModel _categoriesViewModel;
-
-        public MainViewModel()
+    [RelayCommand]
+    private void Navigate(string page)
+    {
+        CurrentView = page switch
         {
-            _accountsViewModel = new AccountsViewModel();
-            _transactionsViewModel = new TransactionsViewModel();
-            _categoriesViewModel = new CategoriesViewModel();
+            "Accounts" => _accountsView,
+            "Transactions" => _transactionsView,
+            "Categories" => _categoriesView,
+            _ => _accountsView
+        };
 
-            CurrentViewModel = _accountsViewModel;
-            Title = "Управление счетами";
-        }
-
-        [RelayCommand]
-        private void Navigate(string page)
+        Title = page switch
         {
-            CurrentViewModel = page switch
-            {
-                "Accounts" => _accountsViewModel,
-                "Transactions" => _transactionsViewModel,
-                "Categories" => _categoriesViewModel,
-                _ => _accountsViewModel
-            };
-
-            Title = page switch
-            {
-                "Accounts" => "Управление счетами",
-                "Transactions" => "Транзакции",
-                "Categories" => "Категории",
-                _ => "Менеджер персональных финансов"
-            };
-        }
+            "Accounts" => "Управление счетами",
+            "Transactions" => "Транзакции",
+            "Categories" => "Категории",
+            _ => "Менеджер персональных финансов"
+        };
     }
 }

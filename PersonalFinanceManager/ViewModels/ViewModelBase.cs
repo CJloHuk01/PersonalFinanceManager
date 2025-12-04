@@ -1,23 +1,26 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using PersonalFinanceManager.Services;
 
-namespace PersonalFinanceManager.ViewModels
+namespace PersonalFinanceManager.ViewModels;
+
+public partial class ViewModelBase : ObservableObject
 {
-    public partial class ViewModelBase : ObservableObject
+    [ObservableProperty]
+    private string _title = string.Empty;
+
+    [ObservableProperty]
+    private bool _isBusy;
+
+    protected readonly DataService DataService;
+
+    public ViewModelBase()
     {
-        [ObservableProperty]
-        private string _title = string.Empty;
+        DataService = new DataService();
+    }
 
-        [ObservableProperty]
-        private bool _isBusy;
-
-        [RelayCommand]
-        protected virtual void Loaded()
-        {
-            
-        }
+    [RelayCommand]
+    protected virtual void Loaded()
+    {
     }
 }
