@@ -20,9 +20,8 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Account>(entity =>
         {
             entity.HasKey(a => a.Id);
-            entity.Property(a => a.Name)
-                  .IsRequired()
-                  .HasMaxLength(100);
+            entity.Property(a => a.Id)
+                  .ValueGeneratedOnAdd();
             entity.Property(a => a.Balance)
                   .HasPrecision(18, 2);
             entity.Property(a => a.AccountType)
@@ -32,21 +31,21 @@ public class ApplicationDbContext : DbContext
                   .HasMaxLength(7)
                   .HasDefaultValue("#007ACC");
             entity.Property(a => a.CreatedDate)
-                  .HasColumnType("timestamp without time zone")
+                  .HasColumnType("timestamp with time zone")
                   .HasDefaultValueSql("NOW()");
         });
         modelBuilder.Entity<Transaction>(entity =>
         {
             entity.HasKey(t => t.Id);
-            entity.Property(t => t.Amount)
-                  .HasPrecision(18, 2);
+            entity.Property(t => t.Id)
+                  .ValueGeneratedOnAdd();
             entity.Property(t => t.Description)
                   .HasMaxLength(500);
             entity.Property(t => t.TransactionType)
                   .HasConversion<string>()
                   .HasMaxLength(10);
             entity.Property(t => t.Date)
-                  .HasColumnType("timestamp without time zone")
+                  .HasColumnType("timestamp with time zone")
                   .HasDefaultValueSql("NOW()");
             entity.HasOne(t => t.Account)
                   .WithMany(a => a.Transactions)
@@ -60,12 +59,12 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Category>(entity =>
         {
             entity.HasKey(c => c.Id);
-            entity.Property(c => c.Name)
-                  .IsRequired()
-                  .HasMaxLength(100);
+            entity.Property(c => c.Id)
+                  .ValueGeneratedOnAdd();
             entity.Property(c => c.CategoryType)
                   .HasConversion<string>()
-                  .HasMaxLength(10);
+                  .HasMaxLength(10)
+                  .HasColumnName("CategoryType");
             entity.Property(c => c.Color)
                   .HasMaxLength(7)
                   .HasDefaultValue("#808080");

@@ -2,7 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:PersonalFinanceManager.ViewModels"
-             xmlns:enums="clr-namespace:PersonalFinanceManager.Enum">
+             xmlns:enums="clr-namespace:PersonalFinanceManager.Enum"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <UserControl.DataContext>
         <vm:CategoriesViewModel />
@@ -27,6 +28,15 @@
                          VerticalAlignment="Center"
                          Padding="5"/>
 
+                <!--<ComboBox SelectedValue="{Binding NewCategoryType}"
+          Width="120"
+          Margin="5,0"
+          VerticalAlignment="Center">
+                    <ComboBox.Items>
+                        <sys:String>Доход</sys:String>
+                        <sys:String>Расход</sys:String>
+                    </ComboBox.Items>
+                </ComboBox>-->
                 <ComboBox SelectedItem="{Binding NewCategoryType}"
                           Width="120"
                           Margin="5,0"
@@ -121,7 +131,7 @@
                                                VerticalAlignment="Center"/>
 
                                     <Button Grid.Column="2" 
-                                            Content="+" 
+                                            Content="X" 
                                             Command="{Binding DataContext.DeleteCategoryCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}"
                                             Background="Transparent" 

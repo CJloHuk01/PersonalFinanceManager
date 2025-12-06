@@ -10,7 +10,6 @@ namespace PersonalFinanceManager.Models
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public CategoryType Type { get; set; }
         public TransactionType CategoryType { get; set; }
         public string Color { get; set; } = "#808080";
 

@@ -58,12 +58,20 @@ public partial class CategoriesViewModel : ViewModelBase
     [RelayCommand]
     private void AddCategory()
     {
+        System.Diagnostics.Debug.WriteLine($"=== ADD CATEGORY CLICKED ===");
+        System.Diagnostics.Debug.WriteLine($"Name: {NewCategoryName}, Type: {NewCategoryType}");
+
         if (string.IsNullOrWhiteSpace(NewCategoryName))
+        {
+            System.Diagnostics.Debug.WriteLine("ОШИБКА: Пустое название категории");
             return;
+        }
 
         try
         {
-            var categoryType = NewCategoryType == "Income" ? TransactionType.Income : TransactionType.Expense;
+            var categoryType = NewCategoryType == "Доход" ? TransactionType.Income : TransactionType.Expense;
+
+            System.Diagnostics.Debug.WriteLine($"Converted CategoryType: {categoryType}");
 
             var category = new Category
             {
@@ -72,7 +80,10 @@ public partial class CategoriesViewModel : ViewModelBase
                 Color = GetDefaultColor(categoryType)
             };
 
+            System.Diagnostics.Debug.WriteLine($"Создана категория: {category.Name}, {category.CategoryType}, {category.Color}");
+
             DataService.AddCategory(category);
+
             Categories.Add(category);
 
             if (category.CategoryType == TransactionType.Income)
@@ -80,19 +91,24 @@ public partial class CategoriesViewModel : ViewModelBase
             else
                 ExpenseCategories.Add(category);
 
+            System.Diagnostics.Debug.WriteLine($"Категория добавлена. Всего: {Categories.Count}");
+
             NewCategoryName = string.Empty;
+            System.Diagnostics.Debug.WriteLine($"Форма сброшена");
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Ошибка добавления категории: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Inner Exception: {ex.InnerException?.Message}");
+            System.Diagnostics.Debug.WriteLine($"StackTrace: {ex.StackTrace}");
         }
     }
+
 
     [RelayCommand]
     private void DeleteCategory(Category category)
     {
         if (category == null) return;
-
         try
         {
             DataService.DeleteCategory(category);

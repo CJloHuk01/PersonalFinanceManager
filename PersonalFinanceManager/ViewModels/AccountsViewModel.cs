@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using PersonalFinanceManager.Data;
 using PersonalFinanceManager.Enum;
 using PersonalFinanceManager.Models;
+using PersonalFinanceManager.Services;
 using System.Collections.ObjectModel;
 
 namespace PersonalFinanceManager.ViewModels;
@@ -11,6 +12,7 @@ namespace PersonalFinanceManager.ViewModels;
 public partial class AccountsViewModel : ViewModelBase
 {
     private readonly ApplicationDbContext _context;
+    private readonly DataService _dataService;
 
     [ObservableProperty]
     private ObservableCollection<Account> _accounts = new();
@@ -18,19 +20,28 @@ public partial class AccountsViewModel : ViewModelBase
     [ObservableProperty]
     private Account? _selectedAccount;
 
+
     [ObservableProperty]
     private string _newAccountName = string.Empty;
 
     [ObservableProperty]
-    private AccountType _newAccountType = AccountType.BankCard;
+    private string _newAccountType = "Наличные";
 
+    public ObservableCollection<string> AccountTypes { get; } = new()
+    {
+        "Наличные",
+        "Банковская карта",
+        "Кредитная карта",
+        "Сбережения",
+        "Инвестиции"
+    };
     [ObservableProperty]
     private decimal _initialBalance;
 
     public AccountsViewModel()
     {
         Title = "Управление счетами";
-        _context = new ApplicationDbContext();
+        _dataService = new DataService();
         LoadAccounts();
     }
 
@@ -39,10 +50,13 @@ public partial class AccountsViewModel : ViewModelBase
         try
         {
             Accounts.Clear();
-            var accounts = _context.Accounts.ToList();
+            var accounts = _dataService.GetAccounts();
+
+            System.Diagnostics.Debug.WriteLine($"=== Загружено счетов: {accounts.Count} ===");
             foreach (var account in accounts)
             {
                 Accounts.Add(account);
+                System.Diagnostics.Debug.WriteLine($"- {account.Id}: {account.Name} ({account.Balance})");
             }
         }
         catch (Exception ex)
@@ -54,31 +68,48 @@ public partial class AccountsViewModel : ViewModelBase
     [RelayCommand]
     private void AddAccount()
     {
+        System.Diagnostics.Debug.WriteLine($"Name: {NewAccountName}, Type: {NewAccountType}, Balance: {InitialBalance}");
+
         if (string.IsNullOrWhiteSpace(NewAccountName))
+        {
+            System.Diagnostics.Debug.WriteLine("ОШИБКА: Пустое название счета");
             return;
+        }
 
         try
         {
+            string accountTypeString = NewAccountType; 
+            System.Diagnostics.Debug.WriteLine($"AccountType string: '{accountTypeString}'");
+            AccountType accountType = accountTypeString switch
+            {
+                "Наличные" => AccountType.Cash,
+                "Банковская карта" => AccountType.BankCard,
+                "Кредитная карта" => AccountType.CreditCard,
+                "Сбережения" => AccountType.Savings,
+                "Инвестиции" => AccountType.Investment,
+                _ => AccountType.Cash
+            };
+            System.Diagnostics.Debug.WriteLine($"Converted AccountType: {accountType}");
             var account = new Account
             {
                 Name = NewAccountName.Trim(),
-                AccountType = NewAccountType,
+                AccountType = accountType,
                 Balance = InitialBalance,
-                Color = GetDefaultColor(NewAccountType)
+                Color = GetDefaultColor(accountType),
+                CreatedDate = DateTime.UtcNow
             };
-
-            _context.Accounts.Add(account);
-            _context.SaveChanges();
-
+            System.Diagnostics.Debug.WriteLine($"Создан аккаунт: {account.Name}, {account.AccountType}, {account.Balance}, {account.CreatedDate}");
             Accounts.Add(account);
-            NewAccountName = string.Empty;
-            InitialBalance = 0;
+            System.Diagnostics.Debug.WriteLine($"Аккаунт добавлен в коллекцию. Всего счетов: {Accounts.Count}");
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Ошибка добавления счета: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Inner Exception: {ex.InnerException?.Message}");
+            System.Diagnostics.Debug.WriteLine($"StackTrace: {ex.StackTrace}");
         }
     }
+
 
     [RelayCommand]
     private void DeleteAccount()

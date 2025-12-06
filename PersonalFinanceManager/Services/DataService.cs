@@ -18,12 +18,26 @@ public class DataService
     {
         return _context.Accounts.ToList();
     }
-
     public void AddAccount(Account account)
     {
-        _context.Accounts.Add(account);
-        _context.SaveChanges();
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"DataService.AddAccount called: {account.Name}");
+            System.Diagnostics.Debug.WriteLine($"Account details: Type={account.AccountType}, Balance={account.Balance}, CreatedDate={account.CreatedDate}");
+
+            _context.Accounts.Add(account);
+            _context.SaveChanges();
+
+            System.Diagnostics.Debug.WriteLine($"Account saved successfully. ID: {account.Id}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"DataService.AddAccount ERROR: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Inner: {ex.InnerException?.Message}");
+            throw;
+        }
     }
+   
 
     public void DeleteAccount(Account account)
     {
@@ -53,8 +67,22 @@ public class DataService
 
     public void AddCategory(Category category)
     {
-        _context.Categories.Add(category);
-        _context.SaveChanges();
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"DataService.AddCategory called: {category.Name}");
+            System.Diagnostics.Debug.WriteLine($"Category details: Type={category.CategoryType}, Color={category.Color}");
+
+            _context.Categories.Add(category);
+            _context.SaveChanges();
+
+            System.Diagnostics.Debug.WriteLine($"Category saved successfully. ID: {category.Id}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"DataService.AddCategory ERROR: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Inner: {ex.InnerException?.Message}");
+            throw;
+        }
     }
 
     public void DeleteCategory(Category category)

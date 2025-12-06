@@ -14,6 +14,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
+
         <Border Grid.Row="0" Background="#F5F5F5" Padding="15" Margin="0,0,0,10">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Добавить счет:" 
@@ -27,15 +28,16 @@
                          VerticalAlignment="Center"
                          Padding="5"/>
 
-                <ComboBox SelectedItem="{Binding NewAccountType}"
-                          Width="120"
-                          Margin="5,0"
+                <ComboBox SelectedValue="{Binding NewAccountType}"
+                          SelectedValuePath="Content"
+                          Width="150"
+                          Margin="0,0,10,0"
                           VerticalAlignment="Center">
-                    <ComboBoxItem Content="Наличные" IsSelected="True"/>
-                    <ComboBoxItem Content="Банковская карта"/>
-                    <ComboBoxItem Content="Кредитная карта"/>
-                    <ComboBoxItem Content="Сбережения"/>
-                    <ComboBoxItem Content="Инвестиции"/>
+                    <ComboBoxItem Content="Cash"/>
+                    <ComboBoxItem Content="BankCard"/>
+                    <ComboBoxItem Content="CreditCard"/>
+                    <ComboBoxItem Content="Savings"/>
+                    <ComboBoxItem Content="Investment"/>
                 </ComboBox>
 
                 <TextBox Text="{Binding InitialBalance}"
@@ -44,7 +46,7 @@
                          VerticalAlignment="Center"
                          Padding="5"/>
 
-                <Button Content="+ Добавить"
+                <Button Content="Добавить"
                         Command="{Binding AddAccountCommand}"
                         Margin="10,0,0,0"
                         Padding="10,5"
