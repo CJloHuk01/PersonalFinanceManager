@@ -8,16 +8,19 @@ public partial class MainViewModel : ViewModelBase
 {
     [ObservableProperty]
     private object _currentView = null!;
-
+    private readonly AccountsViewModel _accountsViewModel;
     private readonly AccountsView _accountsView;
     private readonly TransactionsView _transactionsView;
     private readonly CategoriesView _categoriesView;
 
     public MainViewModel()
     {
-        _accountsView = new AccountsView();
-        _transactionsView = new TransactionsView();
-        _categoriesView = new CategoriesView();
+        _accountsViewModel = new AccountsViewModel();
+        _accountsView = new AccountsView
+        {
+            DataContext = _accountsViewModel
+        };
+
         CurrentView = _accountsView;
         Title = "Управление счетами";
     }

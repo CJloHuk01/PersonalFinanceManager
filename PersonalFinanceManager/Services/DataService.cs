@@ -7,6 +7,19 @@ namespace PersonalFinanceManager.Services;
 
 public class DataService
 {
+    private static DataService? _instance;
+    private static readonly object _lock = new();
+
+    public static DataService Instance
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return _instance ??= new DataService();
+            }
+        }
+    }
     private readonly ApplicationDbContext _context;
 
     public DataService()
@@ -104,7 +117,7 @@ public class DataService
     {
         _context.Transactions.Add(transaction);
 
-        UpdateAccountBalance(transaction.AccountId, transaction.Amount, transaction.TransactionType);
+        //UpdateAccountBalance(transaction.AccountId, transaction.Amount, transaction.TransactionType);
 
         _context.SaveChanges();
     }

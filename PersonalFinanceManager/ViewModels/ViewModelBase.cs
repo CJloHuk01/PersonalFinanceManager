@@ -16,7 +16,7 @@ public partial class ViewModelBase : ObservableObject
 
     public ViewModelBase()
     {
-        DataService = new DataService();
+        DataService = DataService.Instance;
     }
 
     [RelayCommand]

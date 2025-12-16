@@ -1,7 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.EntityFrameworkCore;
-using PersonalFinanceManager.Data;
 using PersonalFinanceManager.Enum;
 using PersonalFinanceManager.Models;
 using PersonalFinanceManager.Services;
@@ -11,37 +9,33 @@ namespace PersonalFinanceManager.ViewModels;
 
 public partial class AccountsViewModel : ViewModelBase
 {
-    private readonly ApplicationDbContext _context;
-    private readonly DataService _dataService;
-
     [ObservableProperty]
     private ObservableCollection<Account> _accounts = new();
 
     [ObservableProperty]
     private Account? _selectedAccount;
 
-
     [ObservableProperty]
     private string _newAccountName = string.Empty;
 
     [ObservableProperty]
-    private string _newAccountType = "Наличные";
+    private string _newAccountType = "Cash";
+
+    [ObservableProperty]
+    private decimal _initialBalance;
 
     public ObservableCollection<string> AccountTypes { get; } = new()
     {
-        "Наличные",
-        "Банковская карта",
-        "Кредитная карта",
-        "Сбережения",
-        "Инвестиции"
+        "Cash",
+        "BankCard",
+        "CreditCard",
+        "Savings",
+        "Investment"
     };
-    [ObservableProperty]
-    private decimal _initialBalance;
 
     public AccountsViewModel()
     {
         Title = "Управление счетами";
-        _dataService = new DataService();
         LoadAccounts();
     }
 
@@ -50,18 +44,27 @@ public partial class AccountsViewModel : ViewModelBase
         try
         {
             Accounts.Clear();
-            var accounts = _dataService.GetAccounts();
+            var accounts = DataService.GetAccounts();
 
             System.Diagnostics.Debug.WriteLine($"=== Загружено счетов: {accounts.Count} ===");
+
+            if (accounts.Count == 0)
+            {
+                System.Diagnostics.Debug.WriteLine("Нет счетов в БД или ошибка загрузки");
+            }
+
             foreach (var account in accounts)
             {
+                System.Diagnostics.Debug.WriteLine($"- {account.Id}: {account.Name} ({account.Balance}), Type: {account.AccountType}");
                 Accounts.Add(account);
-                System.Diagnostics.Debug.WriteLine($"- {account.Id}: {account.Name} ({account.Balance})");
             }
+
+            System.Diagnostics.Debug.WriteLine($"Accounts.Count в коллекции: {Accounts.Count}");
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Ошибка загрузки счетов: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"StackTrace: {ex.StackTrace}");
         }
     }
 
@@ -78,18 +81,16 @@ public partial class AccountsViewModel : ViewModelBase
 
         try
         {
-            string accountTypeString = NewAccountType; 
-            System.Diagnostics.Debug.WriteLine($"AccountType string: '{accountTypeString}'");
-            AccountType accountType = accountTypeString switch
+            AccountType accountType = NewAccountType switch
             {
-                "Наличные" => AccountType.Cash,
-                "Банковская карта" => AccountType.BankCard,
-                "Кредитная карта" => AccountType.CreditCard,
-                "Сбережения" => AccountType.Savings,
-                "Инвестиции" => AccountType.Investment,
+                "Cash" => AccountType.Cash,
+                "BankCard" => AccountType.BankCard,
+                "CreditCard" => AccountType.CreditCard,
+                "Savings" => AccountType.Savings,
+                "Investment" => AccountType.Investment,
                 _ => AccountType.Cash
             };
-            System.Diagnostics.Debug.WriteLine($"Converted AccountType: {accountType}");
+
             var account = new Account
             {
                 Name = NewAccountName.Trim(),
@@ -98,29 +99,35 @@ public partial class AccountsViewModel : ViewModelBase
                 Color = GetDefaultColor(accountType),
                 CreatedDate = DateTime.UtcNow
             };
-            System.Diagnostics.Debug.WriteLine($"Создан аккаунт: {account.Name}, {account.AccountType}, {account.Balance}, {account.CreatedDate}");
-            Accounts.Add(account);
-            System.Diagnostics.Debug.WriteLine($"Аккаунт добавлен в коллекцию. Всего счетов: {Accounts.Count}");
+
+            DataService.AddAccount(account);
+
+            // Перезагружаем список
+            LoadAccounts();
+
+            // Сбрасываем форму
+            NewAccountName = string.Empty;
+            InitialBalance = 0;
+            NewAccountType = "Cash";
+
+            System.Diagnostics.Debug.WriteLine($"Счет успешно добавлен");
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Ошибка добавления счета: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"Inner Exception: {ex.InnerException?.Message}");
             System.Diagnostics.Debug.WriteLine($"StackTrace: {ex.StackTrace}");
         }
     }
 
-
     [RelayCommand]
-    private void DeleteAccount()
+    private void DeleteAccount(Account account)
     {
-        if (SelectedAccount == null) return;
+        if (account == null) return;
         try
         {
-            _context.Accounts.Remove(SelectedAccount);
-            _context.SaveChanges();
-            Accounts.Remove(SelectedAccount);
-            SelectedAccount = null;
+            DataService.DeleteAccount(account);
+            Accounts.Remove(account);
+            System.Diagnostics.Debug.WriteLine($"Счет удален");
         }
         catch (Exception ex)
         {
@@ -132,12 +139,12 @@ public partial class AccountsViewModel : ViewModelBase
     {
         return accountType switch
         {
-            AccountType.Cash => "#4CAF50",        
-            AccountType.BankCard => "#2196F3",    
-            AccountType.CreditCard => "#F44336",  
-            AccountType.Savings => "#FF9800",     
-            AccountType.Investment => "#9C27B0",  
-            _ => "#607D8B"                        
+            AccountType.Cash => "#4CAF50",
+            AccountType.BankCard => "#2196F3",
+            AccountType.CreditCard => "#F44336",
+            AccountType.Savings => "#FF9800",
+            AccountType.Investment => "#9C27B0",
+            _ => "#607D8B"
         };
     }
 }

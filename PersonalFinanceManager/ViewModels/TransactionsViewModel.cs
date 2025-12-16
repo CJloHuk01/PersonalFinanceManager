@@ -1,17 +1,15 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.EntityFrameworkCore;
-using PersonalFinanceManager.Data;
 using PersonalFinanceManager.Enum;
 using PersonalFinanceManager.Models;
+using PersonalFinanceManager.Services;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace PersonalFinanceManager.ViewModels;
 
 public partial class TransactionsViewModel : ViewModelBase
 {
-    private readonly ApplicationDbContext _context;
-
     [ObservableProperty]
     private ObservableCollection<Transaction> _transactions = new();
 
@@ -20,6 +18,9 @@ public partial class TransactionsViewModel : ViewModelBase
 
     [ObservableProperty]
     private ObservableCollection<Category> _categories = new();
+
+    [ObservableProperty]
+    private ObservableCollection<Category> _filteredCategories = new();
 
     [ObservableProperty]
     private decimal _transactionAmount;
@@ -42,7 +43,6 @@ public partial class TransactionsViewModel : ViewModelBase
     public TransactionsViewModel()
     {
         Title = "Транзакции";
-        _context = new ApplicationDbContext();
         LoadData();
     }
 
@@ -50,34 +50,34 @@ public partial class TransactionsViewModel : ViewModelBase
     {
         try
         {
-            var transactions = _context.Transactions
-                .Include(t => t.Account)
-                .Include(t => t.Category)
-                .OrderByDescending(t => t.Date)
-                .ToList();
-
             Transactions.Clear();
+            var transactions = DataService.GetTransactions();
             foreach (var transaction in transactions)
             {
                 Transactions.Add(transaction);
             }
 
             Accounts.Clear();
-            var accounts = _context.Accounts.ToList();
+            var accounts = DataService.GetAccounts();
             foreach (var account in accounts)
             {
                 Accounts.Add(account);
             }
 
             Categories.Clear();
-            var categories = _context.Categories.ToList();
+            FilteredCategories.Clear();
+            var categories = DataService.GetCategories();
             foreach (var category in categories)
             {
                 Categories.Add(category);
+                if (category.CategoryType == TransactionType)
+                {
+                    FilteredCategories.Add(category);
+                }
             }
 
             SelectedAccount = Accounts.FirstOrDefault();
-            SelectedCategory = Categories.FirstOrDefault(c => c.CategoryType == TransactionType.Expense);
+            SelectedCategory = FilteredCategories.FirstOrDefault();
         }
         catch (Exception ex)
         {
@@ -89,7 +89,10 @@ public partial class TransactionsViewModel : ViewModelBase
     private void AddTransaction()
     {
         if (SelectedAccount == null || SelectedCategory == null || TransactionAmount <= 0)
+        {
+            System.Diagnostics.Debug.WriteLine("Ошибка: не выбраны счет или категория, или сумма неверна");
             return;
+        }
 
         try
         {
@@ -100,23 +103,21 @@ public partial class TransactionsViewModel : ViewModelBase
                 Description = TransactionDescription.Trim(),
                 TransactionType = TransactionType,
                 AccountId = SelectedAccount.Id,
-                CategoryId = SelectedCategory.Id,
-                Account = SelectedAccount,
-                Category = SelectedCategory
+                CategoryId = SelectedCategory.Id
             };
 
-            _context.Transactions.Add(transaction);
+            DataService.AddTransaction(transaction);
 
-            if (TransactionType == TransactionType.Income)
-                SelectedAccount.Balance += TransactionAmount;
-            else
-                SelectedAccount.Balance -= TransactionAmount;
+            //if (TransactionType == TransactionType.Income)
+            //    SelectedAccount.Balance += TransactionAmount;
+            //else
+            //    SelectedAccount.Balance -= TransactionAmount;
 
-            _context.SaveChanges();
-
-            Transactions.Insert(0, transaction);
+            LoadData();
 
             ResetForm();
+
+            System.Diagnostics.Debug.WriteLine($"Транзакция успешно добавлена");
         }
         catch (Exception ex)
         {
@@ -131,19 +132,10 @@ public partial class TransactionsViewModel : ViewModelBase
 
         try
         {
-            var account = _context.Accounts.Find(transaction.AccountId);
-            if (account != null)
-            {
-                if (transaction.TransactionType == TransactionType.Income)
-                    account.Balance -= transaction.Amount;
-                else
-                    account.Balance += transaction.Amount;
-            }
-
-            _context.Transactions.Remove(transaction);
-            _context.SaveChanges();
-
+            DataService.DeleteTransaction(transaction);
             Transactions.Remove(transaction);
+
+            System.Diagnostics.Debug.WriteLine($"Транзакция удалена");
         }
         catch (Exception ex)
         {
@@ -156,11 +148,16 @@ public partial class TransactionsViewModel : ViewModelBase
         TransactionAmount = 0;
         TransactionDescription = string.Empty;
         TransactionDate = DateTime.Now;
-        SelectedCategory = Categories.FirstOrDefault(c => c.CategoryType == TransactionType);
     }
 
     partial void OnTransactionTypeChanged(TransactionType value)
     {
-        SelectedCategory = Categories.FirstOrDefault(c => c.CategoryType == value);
+        FilteredCategories.Clear();
+        var filtered = Categories.Where(c => c.CategoryType == value).ToList();
+        foreach (var category in filtered)
+        {
+            FilteredCategories.Add(category);
+        }
+        SelectedCategory = FilteredCategories.FirstOrDefault();
     }
 }

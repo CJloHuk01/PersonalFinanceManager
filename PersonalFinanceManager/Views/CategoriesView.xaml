@@ -5,9 +5,9 @@
              xmlns:enums="clr-namespace:PersonalFinanceManager.Enum"
              xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
-    <UserControl.DataContext>
+    <!--<UserControl.DataContext>
         <vm:CategoriesViewModel />
-    </UserControl.DataContext>
+    </UserControl.DataContext>-->
 
     <Grid Margin="10">
         <Grid.RowDefinitions>
@@ -37,13 +37,14 @@
                         <sys:String>Расход</sys:String>
                     </ComboBox.Items>
                 </ComboBox>-->
-                <ComboBox SelectedItem="{Binding NewCategoryType}"
+                <ComboBox SelectedValue="{Binding NewCategoryType}"
                           Width="120"
                           Margin="5,0"
                           VerticalAlignment="Center">
                     <ComboBoxItem Content="Доход"/>
                     <ComboBoxItem Content="Расход" IsSelected="True"/>
                 </ComboBox>
+
 
                 <Button Content="➕ Добавить"
                         Command="{Binding AddCategoryCommand}"

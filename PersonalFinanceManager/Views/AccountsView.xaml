@@ -4,16 +4,15 @@
              xmlns:vm="clr-namespace:PersonalFinanceManager.ViewModels"
              xmlns:system="clr-namespace:System;assembly=mscorlib">
 
-    <UserControl.DataContext>
+    <!--<UserControl.DataContext>
         <vm:AccountsViewModel />
-    </UserControl.DataContext>
+    </UserControl.DataContext>-->
 
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-
 
         <Border Grid.Row="0" Background="#F5F5F5" Padding="15" Margin="0,0,0,10">
             <StackPanel Orientation="Horizontal">
@@ -28,19 +27,14 @@
                          VerticalAlignment="Center"
                          Padding="5"/>
 
-                <ComboBox SelectedValue="{Binding NewAccountType}"
-                          SelectedValuePath="Content"
+                <ComboBox ItemsSource="{Binding AccountTypes}"
+                          SelectedItem="{Binding NewAccountType}"
                           Width="150"
                           Margin="0,0,10,0"
                           VerticalAlignment="Center">
-                    <ComboBoxItem Content="Cash"/>
-                    <ComboBoxItem Content="BankCard"/>
-                    <ComboBoxItem Content="CreditCard"/>
-                    <ComboBoxItem Content="Savings"/>
-                    <ComboBoxItem Content="Investment"/>
                 </ComboBox>
 
-                <TextBox Text="{Binding InitialBalance}"
+                <TextBox Text="{Binding InitialBalance, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                          Width="100"
                          Margin="5,0"
                          VerticalAlignment="Center"
@@ -88,7 +82,7 @@
                                 </StackPanel>
 
                                 <TextBlock Grid.Column="2" 
-                                           Text="{Binding Balance, StringFormat={}{0:N2} ₽}" 
+                                           Text="{Binding Balance, StringFormat={}{0:N2}}" 
                                            FontSize="16" 
                                            FontWeight="Bold"
                                            VerticalAlignment="Center"
@@ -97,6 +91,7 @@
                                 <Button Grid.Column="3" 
                                         Content="X" 
                                         Command="{Binding DataContext.DeleteAccountCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
                                         Background="Transparent" 
                                         BorderThickness="0"
                                         Width="30" 

@@ -24,9 +24,14 @@ public class ApplicationDbContext : DbContext
                   .ValueGeneratedOnAdd();
             entity.Property(a => a.Balance)
                   .HasPrecision(18, 2);
+
             entity.Property(a => a.AccountType)
-                  .HasConversion<string>()
+                  .HasConversion(
+                      v => v.ToString(),      
+                      v => (AccountType)System.Enum.Parse(typeof(AccountType), v) 
+                  )
                   .HasMaxLength(20);
+
             entity.Property(a => a.Color)
                   .HasMaxLength(7)
                   .HasDefaultValue("#007ACC");
@@ -34,6 +39,7 @@ public class ApplicationDbContext : DbContext
                   .HasColumnType("timestamp with time zone")
                   .HasDefaultValueSql("NOW()");
         });
+
         modelBuilder.Entity<Transaction>(entity =>
         {
             entity.HasKey(t => t.Id);
@@ -41,9 +47,14 @@ public class ApplicationDbContext : DbContext
                   .ValueGeneratedOnAdd();
             entity.Property(t => t.Description)
                   .HasMaxLength(500);
+
             entity.Property(t => t.TransactionType)
-                  .HasConversion<string>()
+                  .HasConversion(
+                      v => v.ToString(),
+                      v => (TransactionType)System.Enum.Parse(typeof(TransactionType), v)
+                  )
                   .HasMaxLength(10);
+
             entity.Property(t => t.Date)
                   .HasColumnType("timestamp with time zone")
                   .HasDefaultValueSql("NOW()");
@@ -56,15 +67,21 @@ public class ApplicationDbContext : DbContext
                   .HasForeignKey(t => t.CategoryId)
                   .OnDelete(DeleteBehavior.Restrict);
         });
+
         modelBuilder.Entity<Category>(entity =>
         {
             entity.HasKey(c => c.Id);
             entity.Property(c => c.Id)
                   .ValueGeneratedOnAdd();
+
             entity.Property(c => c.CategoryType)
-                  .HasConversion<string>()
+                  .HasConversion(
+                      v => v.ToString(),
+                      v => (TransactionType)System.Enum.Parse(typeof(TransactionType), v)
+                  )
                   .HasMaxLength(10)
                   .HasColumnName("CategoryType");
+
             entity.Property(c => c.Color)
                   .HasMaxLength(7)
                   .HasDefaultValue("#808080");
@@ -74,7 +91,6 @@ public class ApplicationDbContext : DbContext
                   .HasForeignKey(c => c.ParentCategoryId)
                   .OnDelete(DeleteBehavior.Restrict);
         });
-        
     }
 
 }
