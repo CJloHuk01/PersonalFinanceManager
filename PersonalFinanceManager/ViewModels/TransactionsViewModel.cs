@@ -99,7 +99,7 @@ public partial class TransactionsViewModel : ViewModelBase
             var transaction = new Transaction
             {
                 Amount = TransactionAmount,
-                Date = TransactionDate,
+                Date = TransactionDate.ToUniversalTime(),
                 Description = TransactionDescription.Trim(),
                 TransactionType = TransactionType,
                 AccountId = SelectedAccount.Id,
@@ -121,7 +121,8 @@ public partial class TransactionsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Ошибка добавления транзакции: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine("Ошибка добавления транзакции:");
+            System.Diagnostics.Debug.WriteLine(ex.InnerException?.Message ?? ex.Message);
         }
     }
 

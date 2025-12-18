@@ -20,9 +20,9 @@
         </ObjectDataProvider>
     </UserControl.Resources>
 
-    <UserControl.DataContext>
+    <!--<UserControl.DataContext>
         <vm:TransactionsViewModel />
-    </UserControl.DataContext>
+    </UserControl.DataContext>-->
 
     <Grid Margin="10">
         <Grid.RowDefinitions>

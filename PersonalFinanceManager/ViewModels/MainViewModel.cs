@@ -8,7 +8,11 @@ public partial class MainViewModel : ViewModelBase
 {
     [ObservableProperty]
     private object _currentView = null!;
+
     private readonly AccountsViewModel _accountsViewModel;
+    private readonly TransactionsViewModel _transactionsViewModel;
+    private readonly CategoriesViewModel _categoriesViewModel;
+
     private readonly AccountsView _accountsView;
     private readonly TransactionsView _transactionsView;
     private readonly CategoriesView _categoriesView;
@@ -16,9 +20,22 @@ public partial class MainViewModel : ViewModelBase
     public MainViewModel()
     {
         _accountsViewModel = new AccountsViewModel();
+        _transactionsViewModel = new TransactionsViewModel();
+        _categoriesViewModel = new CategoriesViewModel();
+
         _accountsView = new AccountsView
         {
             DataContext = _accountsViewModel
+        };
+
+        _transactionsView = new TransactionsView
+        {
+            DataContext = _transactionsViewModel
+        };
+
+        _categoriesView = new CategoriesView
+        {
+            DataContext = _categoriesViewModel
         };
 
         CurrentView = _accountsView;
