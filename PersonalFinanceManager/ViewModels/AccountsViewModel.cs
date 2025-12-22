@@ -39,7 +39,7 @@ public partial class AccountsViewModel : ViewModelBase
         LoadAccounts();
     }
 
-    private void LoadAccounts()
+    public void LoadAccounts()
     {
         try
         {
@@ -134,7 +134,10 @@ public partial class AccountsViewModel : ViewModelBase
             System.Diagnostics.Debug.WriteLine($"Ошибка удаления счета: {ex.Message}");
         }
     }
-
+    public void Reload()
+    {
+        LoadAccounts();
+    }
     private string GetDefaultColor(AccountType accountType)
     {
         return accountType switch

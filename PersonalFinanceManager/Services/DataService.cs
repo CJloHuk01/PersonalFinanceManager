@@ -58,15 +58,6 @@ public class DataService
         _context.SaveChanges();
     }
 
-    public void UpdateAccountBalance(int accountId, decimal amount, TransactionType transactionType)
-    {
-        var account = _context.Accounts.Find(accountId);
-        if (account != null)
-        {
-            account.Balance += transactionType == TransactionType.Income ? amount : -amount;
-            _context.SaveChanges();
-        }
-    }
 
     public List<Category> GetCategories()
     {
@@ -115,24 +106,35 @@ public class DataService
 
     public void AddTransaction(Transaction transaction)
     {
+        var account = _context.Accounts.First(a => a.Id == transaction.AccountId);
+
+        if (transaction.TransactionType == TransactionType.Expense &&
+            account.Balance < transaction.Amount)
+        {
+            throw new InvalidOperationException("Недостаточно средств на счёте");
+        }
+
+        if (transaction.TransactionType == TransactionType.Income)
+            account.Balance += transaction.Amount;
+        else
+            account.Balance -= transaction.Amount;
+
         _context.Transactions.Add(transaction);
-
-        //UpdateAccountBalance(transaction.AccountId, transaction.Amount, transaction.TransactionType);
-
         _context.SaveChanges();
     }
 
     public void DeleteTransaction(Transaction transaction)
     {
-        var account = _context.Accounts.Find(transaction.AccountId);
-        if (account != null)
-        {
-            account.Balance += transaction.TransactionType == TransactionType.Income
-                ? -transaction.Amount
-                : transaction.Amount;
-        }
+        var existing = _context.Transactions
+        .Include(t => t.Account)
+        .First(t => t.Id == transaction.Id);
 
-        _context.Transactions.Remove(transaction);
+        if (existing.TransactionType == TransactionType.Income)
+            existing.Account.Balance -= existing.Amount;
+        else
+            existing.Account.Balance += existing.Amount;
+
+        _context.Transactions.Remove(existing);
         _context.SaveChanges();
     }
 

@@ -150,7 +150,10 @@ public partial class TransactionsViewModel : ViewModelBase
         TransactionDescription = string.Empty;
         TransactionDate = DateTime.Now;
     }
-
+    public void Reload()
+    {
+        LoadData();
+    }
     partial void OnTransactionTypeChanged(TransactionType value)
     {
         FilteredCategories.Clear();

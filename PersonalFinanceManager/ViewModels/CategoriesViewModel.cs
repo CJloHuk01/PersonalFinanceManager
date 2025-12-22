@@ -125,7 +125,10 @@ public partial class CategoriesViewModel : ViewModelBase
             System.Diagnostics.Debug.WriteLine($"Ошибка удаления категории: {ex.Message}");
         }
     }
-
+    public void Reload()
+    {
+        LoadCategories();
+    }
     private string GetDefaultColor(TransactionType categoryType)
     {
         return categoryType switch

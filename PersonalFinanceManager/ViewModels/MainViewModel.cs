@@ -23,6 +23,7 @@ public partial class MainViewModel : ViewModelBase
         _transactionsViewModel = new TransactionsViewModel();
         _categoriesViewModel = new CategoriesViewModel();
 
+
         _accountsView = new AccountsView
         {
             DataContext = _accountsViewModel
@@ -53,12 +54,37 @@ public partial class MainViewModel : ViewModelBase
             _ => _accountsView
         };
 
-        Title = page switch
+        switch (page)
         {
-            "Accounts" => "Управление счетами",
-            "Transactions" => "Транзакции",
-            "Categories" => "Категории",
-            _ => "Менеджер персональных финансов"
-        };
+            case "Accounts":
+                _accountsViewModel.Reload();
+                Title = "Управление счетами";
+                break;
+
+            case "Transactions":
+                _transactionsViewModel.Reload();
+                Title = "Транзакции";
+                break;
+
+            case "Categories":
+                _categoriesViewModel.Reload();
+                Title = "Категории";
+                break;
+        }
+        //CurrentView = page switch
+        //{
+        //    "Accounts" => _accountsView,
+        //    "Transactions" => _transactionsView,
+        //    "Categories" => _categoriesView,
+        //    _ => _accountsView
+        //};
+
+        //Title = page switch
+        //{
+        //    "Accounts" => "Управление счетами",
+        //    "Transactions" => "Транзакции",
+        //    "Categories" => "Категории",
+        //    _ => "Менеджер персональных финансов"
+        //};
     }
 }
