@@ -6,14 +6,13 @@ namespace PersonalFinanceManager.Enum
 {
     public enum AccountType
     {
-        Cash,
-        BankCard,
-        CreditCard,
-        Savings,
-        Investment,
-        Deposit,
-        ElectronicWallet,
-        Loan,
-        Mortgage
+        Наличные,
+        Банковская_карта,
+        Кредитная_карта,
+        Сбережения,
+        Инвестиции,
+        Депозит,
+        Электронный_кошелек,
+        Кредит
     }
 }

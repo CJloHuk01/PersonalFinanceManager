@@ -11,6 +11,7 @@ public class Account
     public AccountType AccountType { get; set; }
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     public string Color { get; set; } = "#007ACC";
-
     public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
+    public int UserId { get; set; }
+    public virtual User User { get; set; } = null!;
 }

@@ -6,7 +6,7 @@ namespace PersonalFinanceManager.Enum
 {
     public enum TransactionType
     {
-        Income,
-        Expense
+        Доход,
+        Расход
     }
 }

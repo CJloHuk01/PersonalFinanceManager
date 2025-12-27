@@ -4,6 +4,9 @@ using PersonalFinanceManager.Enum;
 using PersonalFinanceManager.Models;
 using PersonalFinanceManager.Services;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Windows.Data;
+
 
 namespace PersonalFinanceManager.ViewModels;
 
@@ -19,23 +22,21 @@ public partial class AccountsViewModel : ViewModelBase
     private string _newAccountName = string.Empty;
 
     [ObservableProperty]
-    private string _newAccountType = "Cash";
-
-    [ObservableProperty]
     private decimal _initialBalance;
 
-    public ObservableCollection<string> AccountTypes { get; } = new()
-    {
-        "Cash",
-        "BankCard",
-        "CreditCard",
-        "Savings",
-        "Investment"
-    };
+    public ICollectionView AccountsView { get; }
+
+    [ObservableProperty]
+    private AccountType _selectedAccountType = AccountType.Наличные;
+    private bool _sortDescending;
+
+    public IEnumerable<AccountType> AccountTypes =>
+        System.Enum.GetValues(typeof(AccountType)).Cast<AccountType>();
 
     public AccountsViewModel()
     {
         Title = "Управление счетами";
+        AccountsView = CollectionViewSource.GetDefaultView(Accounts);
         LoadAccounts();
     }
 
@@ -71,52 +72,25 @@ public partial class AccountsViewModel : ViewModelBase
     [RelayCommand]
     private void AddAccount()
     {
-        System.Diagnostics.Debug.WriteLine($"Name: {NewAccountName}, Type: {NewAccountType}, Balance: {InitialBalance}");
-
         if (string.IsNullOrWhiteSpace(NewAccountName))
-        {
-            System.Diagnostics.Debug.WriteLine("ОШИБКА: Пустое название счета");
             return;
-        }
 
-        try
+        var account = new Account
         {
-            AccountType accountType = NewAccountType switch
-            {
-                "Cash" => AccountType.Cash,
-                "BankCard" => AccountType.BankCard,
-                "CreditCard" => AccountType.CreditCard,
-                "Savings" => AccountType.Savings,
-                "Investment" => AccountType.Investment,
-                _ => AccountType.Cash
-            };
+            Name = NewAccountName.Trim(),
+            AccountType = SelectedAccountType,
+            Balance = InitialBalance,
+            Color = GetDefaultColor(SelectedAccountType),
+            CreatedDate = DateTime.UtcNow
+        };
 
-            var account = new Account
-            {
-                Name = NewAccountName.Trim(),
-                AccountType = accountType,
-                Balance = InitialBalance,
-                Color = GetDefaultColor(accountType),
-                CreatedDate = DateTime.UtcNow
-            };
+        DataService.AddAccount(account);
 
-            DataService.AddAccount(account);
+        Accounts.Add(account);
 
-            // Перезагружаем список
-            LoadAccounts();
-
-            // Сбрасываем форму
-            NewAccountName = string.Empty;
-            InitialBalance = 0;
-            NewAccountType = "Cash";
-
-            System.Diagnostics.Debug.WriteLine($"Счет успешно добавлен");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Ошибка добавления счета: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"StackTrace: {ex.StackTrace}");
-        }
+        NewAccountName = string.Empty;
+        InitialBalance = 0;
+        SelectedAccountType = AccountType.Наличные;
     }
 
     [RelayCommand]
@@ -142,12 +116,28 @@ public partial class AccountsViewModel : ViewModelBase
     {
         return accountType switch
         {
-            AccountType.Cash => "#4CAF50",
-            AccountType.BankCard => "#2196F3",
-            AccountType.CreditCard => "#F44336",
-            AccountType.Savings => "#FF9800",
-            AccountType.Investment => "#9C27B0",
-            _ => "#607D8B"
+            AccountType.Наличные => "#4CAF50", 
+            AccountType.Банковская_карта => "#2196F3",
+            AccountType.Кредитная_карта => "#F44336", 
+            AccountType.Сбережения => "#FF9800",
+            AccountType.Инвестиции => "#9C27B0", 
+            AccountType.Депозит => "#3F51B5", 
+            AccountType.Электронный_кошелек => "#009688", 
+            AccountType.Кредит => "#795548", 
+            _ => "#607D8B"  
         };
+    }
+    [RelayCommand]
+    private void ToggleSortByBalance()
+    {
+        _sortDescending = !_sortDescending;
+
+        AccountsView.SortDescriptions.Clear();
+        AccountsView.SortDescriptions.Add(
+            new SortDescription(nameof(Account.Balance),
+            _sortDescending ? ListSortDirection.Descending : ListSortDirection.Ascending));
+
+        AccountsView.Refresh();
+
     }
 }

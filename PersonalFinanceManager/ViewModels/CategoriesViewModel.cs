@@ -2,7 +2,10 @@
 using CommunityToolkit.Mvvm.Input;
 using PersonalFinanceManager.Enum;
 using PersonalFinanceManager.Models;
+using PersonalFinanceManager.Views;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Windows.Data;
 
 namespace PersonalFinanceManager.ViewModels;
 
@@ -19,112 +22,92 @@ public partial class CategoriesViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _newCategoryName = string.Empty;
+    [ObservableProperty]
+    private string _filterButtonText = "Все категории";
+
+    private int _filterState = 0;
 
     [ObservableProperty]
-    private string _newCategoryType = "Expense";
+    private TransactionType? _selectedFilterType = null;
+    public ICollectionView CategoriesView { get; }
+
+    public ObservableCollection<TransactionType> TransactionTypes { get; } =
+    new ObservableCollection<TransactionType>
+    {
+        TransactionType.Доход,
+        TransactionType.Расход
+    };
+    [ObservableProperty]
+    private TransactionType _selectedTransactionType = TransactionType.Расход;
 
     public CategoriesViewModel()
     {
         Title = "Категории";
+        CategoriesView = CollectionViewSource.GetDefaultView(Categories);
+        CategoriesView.Filter = CategoryFilter;
         LoadCategories();
+    }
+    private bool CategoryFilter(object obj)
+    {
+        if (obj is not Category c)
+            return false;
+
+        if (SelectedFilterType == null)
+            return true;
+
+        return c.CategoryType == SelectedFilterType;
     }
 
     private void LoadCategories()
     {
-        try
+        Categories.Clear();
+        IncomeCategories.Clear();
+        ExpenseCategories.Clear();
+
+        var categories = DataService.GetCategories();
+
+        foreach (var category in categories)
         {
-            Categories.Clear();
-            IncomeCategories.Clear();
-            ExpenseCategories.Clear();
+            Categories.Add(category);
 
-            var categories = DataService.GetCategories();
-
-            foreach (var category in categories)
-            {
-                Categories.Add(category);
-
-                if (category.CategoryType == TransactionType.Income)
-                    IncomeCategories.Add(category);
-                else
-                    ExpenseCategories.Add(category);
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Ошибка загрузки категорий: {ex.Message}");
+            if (category.CategoryType == TransactionType.Доход)
+                IncomeCategories.Add(category);
+            else
+                ExpenseCategories.Add(category);
         }
     }
+
 
     [RelayCommand]
     private void AddCategory()
     {
-        System.Diagnostics.Debug.WriteLine($"=== ADD CATEGORY CLICKED ===");
-        System.Diagnostics.Debug.WriteLine($"Name: {NewCategoryName}, Type: {NewCategoryType}");
-
         if (string.IsNullOrWhiteSpace(NewCategoryName))
-        {
-            System.Diagnostics.Debug.WriteLine("ОШИБКА: Пустое название категории");
             return;
-        }
 
-        try
+        var category = new Category
         {
-            var categoryType = NewCategoryType == "Доход" ? TransactionType.Income : TransactionType.Expense;
+            Name = NewCategoryName.Trim(),
+            CategoryType = SelectedTransactionType,
+            Color = GetDefaultColor(SelectedTransactionType)
+        };
 
-            System.Diagnostics.Debug.WriteLine($"Converted CategoryType: {categoryType}");
+        DataService.AddCategory(category);
+        Reload();
 
-            var category = new Category
-            {
-                Name = NewCategoryName.Trim(),
-                CategoryType = categoryType,
-                Color = GetDefaultColor(categoryType)
-            };
-
-            System.Diagnostics.Debug.WriteLine($"Создана категория: {category.Name}, {category.CategoryType}, {category.Color}");
-
-            DataService.AddCategory(category);
-
-            Categories.Add(category);
-
-            if (category.CategoryType == TransactionType.Income)
-                IncomeCategories.Add(category);
-            else
-                ExpenseCategories.Add(category);
-
-            System.Diagnostics.Debug.WriteLine($"Категория добавлена. Всего: {Categories.Count}");
-
-            NewCategoryName = string.Empty;
-            System.Diagnostics.Debug.WriteLine($"Форма сброшена");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Ошибка добавления категории: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"Inner Exception: {ex.InnerException?.Message}");
-            System.Diagnostics.Debug.WriteLine($"StackTrace: {ex.StackTrace}");
-        }
+        NewCategoryName = string.Empty;
     }
+
 
 
     [RelayCommand]
     private void DeleteCategory(Category category)
     {
         if (category == null) return;
-        try
-        {
-            DataService.DeleteCategory(category);
 
-            Categories.Remove(category);
-
-            if (category.CategoryType == TransactionType.Income)
-                IncomeCategories.Remove(category);
-            else
-                ExpenseCategories.Remove(category);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Ошибка удаления категории: {ex.Message}");
-        }
+        DataService.DeleteCategory(category);
+        Reload();
     }
+
     public void Reload()
     {
         LoadCategories();
@@ -133,9 +116,34 @@ public partial class CategoriesViewModel : ViewModelBase
     {
         return categoryType switch
         {
-            TransactionType.Income => "#4CAF50",
-            TransactionType.Expense => "#F44336",
+            TransactionType.Доход => "#4CAF50",
+            TransactionType.Расход => "#F44336",
             _ => "#607D8B"
         };
     }
+
+
+
+    [RelayCommand]
+    private void ToggleCategoryFilter()
+    {
+        _filterState = (_filterState + 1) % 3;
+
+        SelectedFilterType = _filterState switch
+        {
+            1 => TransactionType.Доход,
+            2 => TransactionType.Расход,
+            _ => null
+        };
+
+        FilterButtonText = _filterState switch
+        {
+            1 => "Доходы",
+            2 => "Расходы",
+            _ => "Все категории"
+        };
+
+        CategoriesView?.Refresh();
+    }
+
 }

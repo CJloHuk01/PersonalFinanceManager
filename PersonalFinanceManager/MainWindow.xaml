@@ -3,48 +3,57 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:PersonalFinanceManager.ViewModels"
         Title="{Binding Title}" 
-        Height="768" Width="1024"
+        Height="700" Width="1130"
         WindowStartupLocation="CenterScreen">
 
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
-        <Border Grid.Row="0" Background="#007ACC" Padding="15">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="{Binding Title}" 
-                          FontSize="18" FontWeight="Bold" 
-                          Foreground="White" Margin="10,0,0,0"
-                          VerticalAlignment="Center"/>
+    <Grid Background="{StaticResource BackgroundBrush}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="240"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Border Background="#111827" Padding="20">
+            <StackPanel>
+
+                <TextBlock Text="Finance Manager"
+                       FontSize="22"
+                       FontWeight="Bold"
+                       Foreground="White"
+                       Margin="0 0 0 32"/>
+
+                <Button Content="💳 Счета"
+                    Command="{Binding NavigateCommand}"
+                    CommandParameter="Accounts"
+                    Margin="0 0 0 12"
+                    Height="30"/>
+
+                <Button Content="📊 Транзакции"
+                    Command="{Binding NavigateCommand}"
+                    CommandParameter="Transactions"
+                    Margin="0 0 0 12"
+                    Height="30"/>
+
+                <Button Content="📁 Категории"
+                    Command="{Binding NavigateCommand}"
+                    CommandParameter="Categories"
+                    Margin="0 0 0 480"
+                    Height="30"/>
+
+                <Button Content="Выйти" Height="30"
+                    Command="{Binding LogoutCommand}"
+                    Padding="10"
+                    VerticalAlignment="Bottom"/>
+
             </StackPanel>
         </Border>
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <Border Grid.Column="0" BorderBrush="LightGray" BorderThickness="0,0,1,0">
-                <StackPanel Margin="10">
-                    <Button Content="Счета" 
-                            Command="{Binding NavigateCommand}" 
-                            CommandParameter="Accounts" 
-                            Margin="0,5" Height="35"/>
-                    <Button Content="Транзакции" 
-                            Command="{Binding NavigateCommand}" 
-                            CommandParameter="Transactions" 
-                            Margin="0,5" Height="35"/>
-                    <Button Content="Категории" 
-                            Command="{Binding NavigateCommand}" 
-                            CommandParameter="Categories" 
-                            Margin="0,5" Height="35"/>
-                </StackPanel>
-            </Border>
-            <ContentControl Grid.Column="1" Content="{Binding CurrentView}"/>
-        </Grid>
+
+        <ContentControl Grid.Column="1"
+                    Content="{Binding CurrentView}"
+                    Padding="32"/>
     </Grid>
+
 </Window>

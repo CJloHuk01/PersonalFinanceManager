@@ -1,7 +1,8 @@
-﻿using System.Windows;
-using System.Threading.Tasks;
+﻿using Microsoft.EntityFrameworkCore;
 using PersonalFinanceManager.Data;
-using Microsoft.EntityFrameworkCore;
+using PersonalFinanceManager.Views;
+using System.Threading.Tasks;
+using System.Windows;
 
 namespace PersonalFinanceManager;
 
@@ -11,8 +12,8 @@ public partial class App : Application
     {
         base.OnStartup(e);
         await InitializeDatabaseAsync();
-        var mainWindow = new MainWindow();
-        mainWindow.Show();
+        var login = new LoginWindow();
+        login.Show();
     }
 
     private async Task InitializeDatabaseAsync()

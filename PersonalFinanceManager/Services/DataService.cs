@@ -1,14 +1,17 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PersonalFinanceManager.Converters;
 using PersonalFinanceManager.Data;
 using PersonalFinanceManager.Enum;
 using PersonalFinanceManager.Models;
+using System.Text.RegularExpressions;
 
 namespace PersonalFinanceManager.Services;
 
-public class DataService
+public sealed class DataService
 {
     private static DataService? _instance;
     private static readonly object _lock = new();
+    public User? CurrentUser { get; private set; }
 
     public static DataService Instance
     {
@@ -20,141 +23,165 @@ public class DataService
             }
         }
     }
-    private readonly ApplicationDbContext _context;
 
-    public DataService()
+    private DataService() { }
+    private bool IsValidEmail(string email)
     {
-        _context = new ApplicationDbContext();
+        return Regex.IsMatch(
+            email,
+            @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+            RegexOptions.IgnoreCase);
     }
+
+    public bool Register(string email, string password)
+    {
+        using var context = new ApplicationDbContext();
+
+        email = email.Trim().ToLowerInvariant();
+
+        if (!IsValidEmail(email))
+            throw new ArgumentException("Некорректный email");
+
+        if (context.Users.Any(u => u.Email == email))
+            return false;
+
+        var user = new User
+        {
+            Email = email,
+            PasswordHash = PasswordHasher.Hash(password)
+        };
+
+        context.Users.Add(user);
+        context.SaveChanges();
+
+        CurrentUser = user;
+        return true;
+    }
+
+    public bool Login(string email, string password)
+    {
+        using var context = new ApplicationDbContext();
+
+        email = email.Trim().ToLowerInvariant();
+
+        var hash = PasswordHasher.Hash(password);
+
+        var user = context.Users
+            .FirstOrDefault(u => u.Email == email && u.PasswordHash == hash);
+
+        if (user == null)
+            return false;
+
+        CurrentUser = user;
+        return true;
+    }
+    public void Logout()
+    {
+        CurrentUser = null;
+    }
+
 
     public List<Account> GetAccounts()
     {
-        return _context.Accounts.ToList();
+        using var context = new ApplicationDbContext();
+        return context.Accounts
+            .Where(a => a.UserId == CurrentUser!.Id)
+            .AsNoTracking()
+            .ToList();
     }
+
     public void AddAccount(Account account)
     {
-        try
-        {
-            System.Diagnostics.Debug.WriteLine($"DataService.AddAccount called: {account.Name}");
-            System.Diagnostics.Debug.WriteLine($"Account details: Type={account.AccountType}, Balance={account.Balance}, CreatedDate={account.CreatedDate}");
-
-            _context.Accounts.Add(account);
-            _context.SaveChanges();
-
-            System.Diagnostics.Debug.WriteLine($"Account saved successfully. ID: {account.Id}");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"DataService.AddAccount ERROR: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"Inner: {ex.InnerException?.Message}");
-            throw;
-        }
+        using var context = new ApplicationDbContext();
+        account.UserId = CurrentUser!.Id;
+        context.Accounts.Add(account);
+        context.SaveChanges();
     }
-   
 
     public void DeleteAccount(Account account)
     {
-        _context.Accounts.Remove(account);
-        _context.SaveChanges();
+        using var context = new ApplicationDbContext();
+        context.Accounts.Remove(account);
+        context.SaveChanges();
     }
-
 
     public List<Category> GetCategories()
     {
-        return _context.Categories.ToList();
-    }
-
-    public List<Category> GetCategoriesByType(TransactionType type)
-    {
-        return _context.Categories.Where(c => c.CategoryType == type).ToList();
+        using var context = new ApplicationDbContext();
+        return context.Categories
+        .Where(c => c.UserId == CurrentUser!.Id)
+        .AsNoTracking()
+        .ToList();
     }
 
     public void AddCategory(Category category)
     {
-        try
-        {
-            System.Diagnostics.Debug.WriteLine($"DataService.AddCategory called: {category.Name}");
-            System.Diagnostics.Debug.WriteLine($"Category details: Type={category.CategoryType}, Color={category.Color}");
+        using var context = new ApplicationDbContext();
 
-            _context.Categories.Add(category);
-            _context.SaveChanges();
+        category.UserId = CurrentUser!.Id;
 
-            System.Diagnostics.Debug.WriteLine($"Category saved successfully. ID: {category.Id}");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"DataService.AddCategory ERROR: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"Inner: {ex.InnerException?.Message}");
-            throw;
-        }
+        context.Categories.Add(category);
+        context.SaveChanges();
     }
 
     public void DeleteCategory(Category category)
     {
-        _context.Categories.Remove(category);
-        _context.SaveChanges();
+        using var context = new ApplicationDbContext();
+
+        var existing = context.Categories
+            .First(c => c.Id == category.Id && c.UserId == CurrentUser!.Id);
+
+        context.Categories.Remove(existing);
+        context.SaveChanges();
     }
 
     public List<Transaction> GetTransactions()
     {
-        return _context.Transactions
+        using var context = new ApplicationDbContext();
+
+        return context.Transactions
+            .Where(t => t.UserId == CurrentUser!.Id)
             .Include(t => t.Account)
             .Include(t => t.Category)
+            .AsNoTracking()
             .OrderByDescending(t => t.Date)
             .ToList();
     }
 
     public void AddTransaction(Transaction transaction)
     {
-        var account = _context.Accounts.First(a => a.Id == transaction.AccountId);
+        using var context = new ApplicationDbContext();
 
-        if (transaction.TransactionType == TransactionType.Expense &&
+        transaction.UserId = CurrentUser!.Id;
+
+        var account = context.Accounts
+            .First(a => a.Id == transaction.AccountId && a.UserId == CurrentUser!.Id);
+
+        if (transaction.TransactionType == TransactionType.Расход &&
             account.Balance < transaction.Amount)
-        {
-            throw new InvalidOperationException("Недостаточно средств на счёте");
-        }
+            throw new InvalidOperationException("Недостаточно средств");
 
-        if (transaction.TransactionType == TransactionType.Income)
-            account.Balance += transaction.Amount;
-        else
-            account.Balance -= transaction.Amount;
+        account.Balance += transaction.TransactionType == TransactionType.Доход
+            ? transaction.Amount
+            : -transaction.Amount;
 
-        _context.Transactions.Add(transaction);
-        _context.SaveChanges();
+        context.Transactions.Add(transaction);
+        context.SaveChanges();
     }
 
     public void DeleteTransaction(Transaction transaction)
     {
-        var existing = _context.Transactions
-        .Include(t => t.Account)
-        .First(t => t.Id == transaction.Id);
+        using var context = new ApplicationDbContext();
 
-        if (existing.TransactionType == TransactionType.Income)
-            existing.Account.Balance -= existing.Amount;
-        else
-            existing.Account.Balance += existing.Amount;
+        var existing = context.Transactions
+            .Include(t => t.Account)
+            .First(t => t.Id == transaction.Id && t.UserId == CurrentUser!.Id);
 
-        _context.Transactions.Remove(existing);
-        _context.SaveChanges();
-    }
+        existing.Account.Balance += existing.TransactionType == TransactionType.Расход
+            ? existing.Amount
+            : -existing.Amount;
 
-    public decimal GetTotalBalance()
-    {
-        return _context.Accounts.Sum(a => a.Balance);
-    }
-
-    public (decimal Income, decimal Expense) GetIncomeExpenseSummary(DateTime? startDate = null, DateTime? endDate = null)
-    {
-        var query = _context.Transactions.AsQueryable();
-
-        if (startDate.HasValue)
-            query = query.Where(t => t.Date >= startDate.Value);
-        if (endDate.HasValue)
-            query = query.Where(t => t.Date <= endDate.Value);
-
-        var income = query.Where(t => t.TransactionType == TransactionType.Income).Sum(t => t.Amount);
-        var expense = query.Where(t => t.TransactionType == TransactionType.Expense).Sum(t => t.Amount);
-
-        return (income, expense);
+        context.Transactions.Remove(existing);
+        context.SaveChanges();
     }
 }

@@ -1,6 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PersonalFinanceManager.Views;
+using System.Windows;
+using PersonalFinanceManager.Services;
+
 
 namespace PersonalFinanceManager.ViewModels;
 
@@ -42,7 +45,23 @@ public partial class MainViewModel : ViewModelBase
         CurrentView = _accountsView;
         Title = "Управление счетами";
     }
+    [RelayCommand]
+    private void Logout()
+    {
+        DataService.Instance.Logout();
 
+        var login = new LoginWindow();
+        login.Show();
+
+        foreach (var w in Application.Current.Windows)
+        {
+            if (w is MainWindow)
+            {
+                ((Window)w).Close();
+                break;
+            }
+        }
+    }
     [RelayCommand]
     private void Navigate(string page)
     {
@@ -71,20 +90,6 @@ public partial class MainViewModel : ViewModelBase
                 Title = "Категории";
                 break;
         }
-        //CurrentView = page switch
-        //{
-        //    "Accounts" => _accountsView,
-        //    "Transactions" => _transactionsView,
-        //    "Categories" => _categoriesView,
-        //    _ => _accountsView
-        //};
-
-        //Title = page switch
-        //{
-        //    "Accounts" => "Управление счетами",
-        //    "Transactions" => "Транзакции",
-        //    "Categories" => "Категории",
-        //    _ => "Менеджер персональных финансов"
-        //};
+        
     }
 }

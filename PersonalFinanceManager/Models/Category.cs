@@ -17,5 +17,8 @@ namespace PersonalFinanceManager.Models
         public virtual Category? ParentCategory { get; set; }
         public virtual ICollection<Category> SubCategories { get; set; } = new List<Category>();
         public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
+        public int UserId { get; set; }
+        public virtual User User { get; set; } = null!;
+
     }
 }

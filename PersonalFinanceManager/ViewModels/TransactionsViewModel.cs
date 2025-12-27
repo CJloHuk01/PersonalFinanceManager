@@ -3,8 +3,11 @@ using CommunityToolkit.Mvvm.Input;
 using PersonalFinanceManager.Enum;
 using PersonalFinanceManager.Models;
 using PersonalFinanceManager.Services;
+using PersonalFinanceManager.Views;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
+using System.Windows.Data;
 
 namespace PersonalFinanceManager.ViewModels;
 
@@ -32,17 +35,27 @@ public partial class TransactionsViewModel : ViewModelBase
     private string _transactionDescription = string.Empty;
 
     [ObservableProperty]
-    private TransactionType _transactionType = TransactionType.Expense;
+    private TransactionType _transactionType = TransactionType.Расход;
 
     [ObservableProperty]
     private Account? _selectedAccount;
 
     [ObservableProperty]
     private Category? _selectedCategory;
+    [ObservableProperty]
+    private TransactionType? _filterTransactionType = null;
+    public ICollectionView TransactionsView { get; }
+    private bool _dateSortDescending = true;
+    private bool _amountSortDescending = true;
+    [ObservableProperty]
+    private string _filterButtonText = "Все операции";
 
+    private int _filterState = 0;
     public TransactionsViewModel()
     {
         Title = "Транзакции";
+        TransactionsView = CollectionViewSource.GetDefaultView(Transactions);
+        TransactionsView.Filter = TransactionFilter;
         LoadData();
     }
 
@@ -108,11 +121,6 @@ public partial class TransactionsViewModel : ViewModelBase
 
             DataService.AddTransaction(transaction);
 
-            //if (TransactionType == TransactionType.Income)
-            //    SelectedAccount.Balance += TransactionAmount;
-            //else
-            //    SelectedAccount.Balance -= TransactionAmount;
-
             LoadData();
 
             ResetForm();
@@ -157,11 +165,75 @@ public partial class TransactionsViewModel : ViewModelBase
     partial void OnTransactionTypeChanged(TransactionType value)
     {
         FilteredCategories.Clear();
-        var filtered = Categories.Where(c => c.CategoryType == value).ToList();
-        foreach (var category in filtered)
-        {
-            FilteredCategories.Add(category);
-        }
+
+        foreach (var c in Categories.Where(c => c.CategoryType == value))
+            FilteredCategories.Add(c);
+
         SelectedCategory = FilteredCategories.FirstOrDefault();
+    }
+    private bool TransactionFilter(object obj)
+    {
+        if (obj is not Transaction t)
+            return false;
+
+        if (FilterTransactionType != null && t.TransactionType != FilterTransactionType)
+            return false;
+
+        return true;
+    }
+
+    [RelayCommand]
+    private void ToggleTransactionFilter()
+    {
+        _filterState = (_filterState + 1) % 3;
+
+        FilterTransactionType = _filterState switch
+        {
+            1 => TransactionType.Доход,
+            2 => TransactionType.Расход,
+            _ => null
+        };
+
+        FilterButtonText = _filterState switch
+        {
+            1 => "Доходы",
+            2 => "Расходы",
+            _ => "Все операции"
+        };
+
+        TransactionsView.Refresh();
+    }
+
+    [RelayCommand]
+    private void ToggleSortByDate()
+    {
+        _dateSortDescending = !_dateSortDescending;
+
+        TransactionsView.SortDescriptions.Clear();
+
+        TransactionsView.SortDescriptions.Add(
+            new SortDescription(
+                nameof(Transaction.Date),
+                _dateSortDescending
+                    ? ListSortDirection.Descending
+                    : ListSortDirection.Ascending));
+
+        TransactionsView.Refresh();
+    }
+    [RelayCommand]
+    private void ToggleSortByAmount()
+    {
+        _amountSortDescending = !_amountSortDescending;
+
+        TransactionsView.SortDescriptions.Clear();
+
+        TransactionsView.SortDescriptions.Add(
+            new SortDescription(
+                nameof(Transaction.Amount),
+                _amountSortDescending
+                    ? ListSortDirection.Descending
+                    : ListSortDirection.Ascending));
+
+        TransactionsView.Refresh();
     }
 }

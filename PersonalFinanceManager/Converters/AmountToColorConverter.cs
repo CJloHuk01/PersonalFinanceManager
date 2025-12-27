@@ -12,7 +12,7 @@ public class AmountToColorConverter : IValueConverter
     {
         if (value is TransactionType transactionType)
         {
-            return transactionType == TransactionType.Income
+            return transactionType == TransactionType.Доход
                 ? new SolidColorBrush(Color.FromRgb(76, 175, 80))   
                 : new SolidColorBrush(Color.FromRgb(244, 67, 54));  
         }
